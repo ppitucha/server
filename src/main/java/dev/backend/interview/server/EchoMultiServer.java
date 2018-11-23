@@ -1,5 +1,8 @@
 package dev.backend.interview.server;
 
+import dev.backend.interview.server.dev.backend.interview.server.command.Command;
+import dev.backend.interview.server.dev.backend.interview.server.command.CommandDispatcher;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,23 +31,21 @@ public class EchoMultiServer {
         private Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
-        private UUID session;
-        private long startTime;
-        private String name;
-        final String hiText = "HI, I'M ";
+        private SessionContext context;
+        private CommandDispatcher dispatcher;
 
         public EchoClientHandler(Socket socket) {
+            this.dispatcher = new CommandDispatcher();
             this.clientSocket = socket;
-            this.session = UUID.randomUUID();
-            this.startTime = new Date().getTime();
+            this.context = new SessionContext();
+            this.context.setId(UUID.randomUUID());
+            this.context.setStartTime(new Date().getTime());
             try {
                 this.clientSocket.setSoTimeout(30000);
             } catch (SocketException e) {
                 e.printStackTrace();
             }
-            System.out.println("New connection accepted " +
-                    clientSocket.getInetAddress() +
-                    ":" + clientSocket.getPort());
+            log("Server", clientSocket.getPort(), "New connection accepted");
         }
 
         public void run() {
@@ -53,31 +54,23 @@ public class EchoMultiServer {
                 in = new BufferedReader(
                         new InputStreamReader(clientSocket.getInputStream()));
 
-                final String message = hiText + session;
-                System.out.println("Server on socket:  " + clientSocket.getPort() + " message: " + message);
+                Command connectCommand = dispatcher.getConnectCommand();
+                final String message = connectCommand.execute(context, null);
+                log("Server", clientSocket.getPort(), message);
                 out.println(message);
 
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
-                    System.out.println("Client on socket: " + clientSocket.getPort() + " message: " + inputLine);
-                    if (inputLine.startsWith(hiText)) {
-                        this.name = inputLine.substring(inputLine.indexOf(hiText) + hiText.length());
-                        final String response = "HI " + this.name;
-                        System.out.println("Server on socket: " + clientSocket.getPort() + " message: " + response);
-                        out.println(response);
-                    } else if ("BYE MATE!".equals(inputLine)) {
-                        final String response = "BYE " + this.name + ", WE SPOKE FOR " + (new Date().getTime() - this.startTime) + " MS";
-                        System.out.println("Server on socket: " + clientSocket.getPort() + " message: " + response);
-                        out.println(response);
-                    } else {
-                        final String response = "SORRY, I DIDN'T UNDERSTAND THAT";
-                        System.out.println("Server on socket: " + clientSocket.getPort() + " message: " + response);
-                        out.println(response);
-                    }
+                    log("Client", clientSocket.getPort(), inputLine);
+                    Command command = dispatcher.getCommand(inputLine);
+                    final String response = command.execute(context, inputLine);
+                    log("Server", clientSocket.getPort(), response);
+                    out.println(response);
                 }
             } catch (SocketTimeoutException so){
-                final String response = "BYE " + this.name + ", WE SPOKE FOR " + (new Date().getTime() - this.startTime) + " MS";
-                System.out.println("Server on socket:  " + clientSocket.getPort() + " message: " + response);
+                Command byeCommand = dispatcher.getByeCommand();
+                final String response = byeCommand.execute(context, null);
+                log("Server", clientSocket.getPort(), response);
                 out.println(response);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -91,6 +84,11 @@ public class EchoMultiServer {
                 }
             }
         }
+
+        private void log(String who, int port, String message){
+            System.out.println(who + " on socket: " + port + " message: " + message);
+        }
+
     }
 
     public static void main(String[] args) {
