@@ -1,6 +1,7 @@
 package dev.backend.interview.server.dev.backend.interview.server.model;
 
 import org.jgrapht.GraphPath;
+import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.DirectedWeightedPseudograph;
@@ -13,8 +14,8 @@ import java.util.Set;
 
 
 public class ModelImpl implements Model {
-    DirectedWeightedPseudograph<String, DefaultWeightedEdge> graph =
-            new DirectedWeightedPseudograph(DefaultWeightedEdge.class);
+    private DirectedWeightedPseudograph<String, DefaultWeightedEdge> graph =
+            new DirectedWeightedPseudograph<>(DefaultWeightedEdge.class);
 
     @Override
     public synchronized String addNode(String node) {
@@ -58,7 +59,7 @@ public class ModelImpl implements Model {
         if (!graph.containsVertex(node1) || !graph.containsVertex(node2))
             return "ERROR: NODE NOT FOUND";
 
-        DijkstraShortestPath<String, DefaultWeightedEdge> dijkstraAlg =
+        ShortestPathAlgorithm<String, DefaultWeightedEdge> dijkstraAlg =
                 new DijkstraShortestPath<>(graph);
 
         GraphPath<String, DefaultWeightedEdge> path = dijkstraAlg.getPath(node1, node2);
@@ -73,11 +74,12 @@ public class ModelImpl implements Model {
         if (!graph.containsVertex(node))
             return "ERROR: NODE NOT FOUND";
 
-        ClosestFirstIterator iterator = new ClosestFirstIterator(graph, node, limit-1);
+        ClosestFirstIterator<String, DefaultWeightedEdge> iterator =
+                new ClosestFirstIterator<>(graph, node, limit - 1);
 
         List<String> result = new ArrayList<>();
         while (iterator.hasNext()) {
-            String element = (String) iterator.next();
+            String element = iterator.next();
             if (!element.equals(node))
                 result.add(element);
         }
