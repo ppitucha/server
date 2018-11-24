@@ -13,7 +13,11 @@ public class CommandDispatcher {
         commands.add(new HiCommand());
         commands.add(new ByeCommand());
         commands.add(new AddNodeCommand());
-
+        commands.add(new RemoveNodeCommand());
+        commands.add(new AddEdgeCommand());
+        commands.add(new RemoveEdgeCommand());
+        commands.add(new ShortestPathCommand());
+        commands.add(new CloserThanCommand());
     }
 
     public Command getConnectCommand() {
@@ -94,9 +98,96 @@ public class CommandDispatcher {
         @Override
         public String execute(SessionContext context, String input) {
             String nodeName = input.substring(input.indexOf(text) + text.length());
-
-            return "NODE ADDED";
+            return context.getModel().addNode(nodeName);
         }
     }
 
+    class AddEdgeCommand extends CommandBase {
+        private String text = "ADD EDGE ";
+
+        @Override
+        public boolean matching(String input) {
+            return input.startsWith(text);
+        }
+
+        @Override
+        public String execute(SessionContext context, String input) {
+            String[] names = input.substring(input.indexOf(text) + text.length()).split("\\s+");
+            String node1 = names[0];
+            String node2 = names[1];
+            Integer weight = Integer.valueOf(names[2]);
+
+            return context.getModel().addEdge(node1, node2, weight);
+        }
+    }
+
+    class RemoveNodeCommand extends CommandBase {
+        private String text = "REMOVE NODE ";
+
+        @Override
+        public boolean matching(String input) {
+            return input.startsWith(text);
+        }
+
+        @Override
+        public String execute(SessionContext context, String input) {
+            String nodeName = input.substring(input.indexOf(text) + text.length());
+
+            return context.getModel().removeNode(nodeName);
+        }
+    }
+
+    class RemoveEdgeCommand extends CommandBase {
+        private String text = "REMOVE EDGE ";
+
+        @Override
+        public boolean matching(String input) {
+            return input.startsWith(text);
+        }
+
+        @Override
+        public String execute(SessionContext context, String input) {
+            String[] names = input.substring(input.indexOf(text) + text.length()).split("\\s+");
+            String node1 = names[0];
+            String node2 = names[1];
+
+            return context.getModel().removeEdge(node1, node2);
+        }
+    }
+
+    class ShortestPathCommand extends CommandBase {
+        private String text = "SHORTEST PATH ";
+
+        @Override
+        public boolean matching(String input) {
+            return input.startsWith(text);
+        }
+
+        @Override
+        public String execute(SessionContext context, String input) {
+            String[] names = input.substring(input.indexOf(text) + text.length()).split("\\s+");
+            String node1 = names[0];
+            String node2 = names[1];
+
+            return context.getModel().shortestPath(node1, node2);
+        }
+    }
+
+    class CloserThanCommand extends CommandBase {
+        private String text = "CLOSER THAN ";
+
+        @Override
+        public boolean matching(String input) {
+            return input.startsWith(text);
+        }
+
+        @Override
+        public String execute(SessionContext context, String input) {
+            String[] names = input.substring(input.indexOf(text) + text.length()).split("\\s+");
+            Integer limit = Integer.valueOf(names[0]);
+            String node = names[1];
+
+            return context.getModel().closerThan(node, limit);
+        }
+    }
 }

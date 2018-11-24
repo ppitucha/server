@@ -2,6 +2,10 @@ package dev.backend.interview.server;
 
 import dev.backend.interview.server.dev.backend.interview.server.command.Command;
 import dev.backend.interview.server.dev.backend.interview.server.command.CommandDispatcher;
+import dev.backend.interview.server.dev.backend.interview.server.model.Model;
+import dev.backend.interview.server.dev.backend.interview.server.model.ModelImpl;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.DirectedWeightedPseudograph;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,9 +22,11 @@ public class EchoMultiServer {
     private ServerSocket serverSocket;
 
     public void start(int port) throws IOException {
+
+        Model model = new ModelImpl();
         serverSocket = new ServerSocket(port);
         while (true)
-            new EchoClientHandler(serverSocket.accept()).start();
+            new EchoClientHandler(serverSocket.accept(), model).start();
     }
 
     public void stop() throws IOException {
@@ -34,12 +40,13 @@ public class EchoMultiServer {
         private SessionContext context;
         private CommandDispatcher dispatcher;
 
-        public EchoClientHandler(Socket socket) {
+        public EchoClientHandler(Socket socket, Model model) {
             this.dispatcher = new CommandDispatcher();
             this.clientSocket = socket;
             this.context = new SessionContext();
             this.context.setId(UUID.randomUUID());
             this.context.setStartTime(new Date().getTime());
+            this.context.setModel(model);
             try {
                 this.clientSocket.setSoTimeout(30000);
             } catch (SocketException e) {
