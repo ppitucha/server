@@ -20,7 +20,6 @@ public class EchoMultiServer {
     private ServerSocket serverSocket;
 
     public void start(int port) throws IOException {
-
         Model model = new ModelImpl();
         serverSocket = new ServerSocket(port);
         while (true)
@@ -91,14 +90,15 @@ public class EchoMultiServer {
         }
 
         private void log(String who, int port, String message){
-            System.out.println(who + " on socket: " + port + " message: " + message);
+            String text = who + " on socket: " + port + " message: " + message;
+            System.out.println(text);
         }
 
     }
 
     public static void main(String[] args) {
-        EchoMultiServer server = new EchoMultiServer();
         try {
+            EchoMultiServer server = new EchoMultiServer();
             server.start(50000);
         } catch (IOException e) {
             e.printStackTrace();

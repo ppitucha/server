@@ -1,6 +1,5 @@
 package dev.backend.interview.server.dev.backend.interview.server.model;
 
-import org.jgrapht.GraphPath;
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -62,11 +61,11 @@ public class ModelImpl implements Model {
         ShortestPathAlgorithm<String, DefaultWeightedEdge> dijkstraAlg =
                 new DijkstraShortestPath<>(graph);
 
-        GraphPath<String, DefaultWeightedEdge> path = dijkstraAlg.getPath(node1, node2);
-
-        if (path == null)
+        double pathWeight = dijkstraAlg.getPathWeight(node1, node2);
+        if (Double.MAX_VALUE == pathWeight)
             return String.valueOf(Integer.MAX_VALUE);
-        return String.valueOf(path.getLength());
+
+        return String.valueOf((int) pathWeight);
     }
 
     @Override
