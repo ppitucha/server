@@ -1,6 +1,6 @@
 package dev.backend.interview.server;
 
-import dev.backend.interview.server.dev.backend.interview.server.model.Model;
+import dev.backend.interview.server.model.Model;
 import lombok.Data;
 
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package dev.backend.interview.server.dev.backend.interview.server.model;
+package dev.backend.interview.server.model;
 
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
@@ -7,7 +7,6 @@ import org.jgrapht.graph.DirectedWeightedPseudograph;
 import org.jgrapht.traverse.ClosestFirstIterator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -17,61 +16,55 @@ public class ModelImpl implements Model {
             new DirectedWeightedPseudograph<>(DefaultWeightedEdge.class);
 
     @Override
-    public synchronized String addNode(String node) {
-        if (graph.containsVertex(node))
-            return "ERROR: NODE ALREADY EXISTS";
-        graph.addVertex(node);
-        return "NODE ADDED";
+    public synchronized boolean addNode(String node) {
+        return graph.addVertex(node);
     }
 
     @Override
-    public synchronized String addEdge(String node1, String node2, Integer weight) {
+    public synchronized boolean addEdge(String node1, String node2, Integer weight) {
         if (!graph.containsVertex(node1) || !graph.containsVertex(node2))
-            return "ERROR: NODE NOT FOUND";
+            return false;
 
         DefaultWeightedEdge edge = graph.addEdge(node1, node2);
         graph.setEdgeWeight(edge, weight);
-        return "EDGE ADDED";
+        return true;
     }
 
     @Override
-    public synchronized String removeNode(String node) {
-        if (!graph.containsVertex(node))
-            return "ERROR: NODE NOT FOUND";
-
-        graph.removeVertex(node);
-        return "NODE REMOVED";
+    public synchronized boolean removeNode(String node) {
+        return graph.removeVertex(node);
     }
 
     @Override
-    public synchronized String removeEdge(String node1, String node2) {
+    public synchronized boolean removeEdge(String node1, String node2) {
         if (!graph.containsVertex(node1) || !graph.containsVertex(node2))
-            return "ERROR: NODE NOT FOUND";
+            return false;
 
         Set<DefaultWeightedEdge> allEdges = graph.getAllEdges(node1, node2);
         graph.removeAllEdges(allEdges);
-        return "EDGE REMOVED";
+
+        return true;
     }
 
     @Override
-    public synchronized String shortestPath(String node1, String node2) {
+    public synchronized int shortestPath(String node1, String node2) throws NodeNotFoundException {
         if (!graph.containsVertex(node1) || !graph.containsVertex(node2))
-            return "ERROR: NODE NOT FOUND";
+            throw new NodeNotFoundException();
 
         ShortestPathAlgorithm<String, DefaultWeightedEdge> dijkstraAlg =
                 new DijkstraShortestPath<>(graph);
 
         double pathWeight = dijkstraAlg.getPathWeight(node1, node2);
         if (Double.MAX_VALUE == pathWeight)
-            return String.valueOf(Integer.MAX_VALUE);
+            return Integer.MAX_VALUE;
 
-        return String.valueOf((int) pathWeight);
+        return (int) pathWeight;
     }
 
     @Override
-    public synchronized String closerThan(String node, Integer limit) {
+    public synchronized List<String> closerThan(String node, Integer limit) throws NodeNotFoundException {
         if (!graph.containsVertex(node))
-            return "ERROR: NODE NOT FOUND";
+            throw new NodeNotFoundException();
 
         ClosestFirstIterator<String, DefaultWeightedEdge> iterator =
                 new ClosestFirstIterator<>(graph, node, limit - 1);
@@ -82,8 +75,6 @@ public class ModelImpl implements Model {
             if (!element.equals(node))
                 result.add(element);
         }
-
-        Collections.sort(result);
-        return String.join(",", result);
+        return result;
     }
 }

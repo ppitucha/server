@@ -1,9 +1,9 @@
 package dev.backend.interview.server;
 
-import dev.backend.interview.server.dev.backend.interview.server.command.Command;
-import dev.backend.interview.server.dev.backend.interview.server.command.CommandDispatcher;
-import dev.backend.interview.server.dev.backend.interview.server.model.Model;
-import dev.backend.interview.server.dev.backend.interview.server.model.ModelImpl;
+import dev.backend.interview.server.command.Command;
+import dev.backend.interview.server.command.CommandController;
+import dev.backend.interview.server.model.Model;
+import dev.backend.interview.server.model.ModelImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,10 +35,10 @@ public class EchoMultiServer {
         private PrintWriter out;
         private BufferedReader in;
         private SessionContext context;
-        private CommandDispatcher dispatcher;
+        private CommandController controller;
 
         public EchoClientHandler(Socket socket, Model model) {
-            this.dispatcher = new CommandDispatcher();
+            this.controller = new CommandController();
             this.clientSocket = socket;
             this.context = new SessionContext();
             this.context.setId(UUID.randomUUID());
@@ -58,23 +58,24 @@ public class EchoMultiServer {
                 in = new BufferedReader(
                         new InputStreamReader(clientSocket.getInputStream()));
 
-                Command connectCommand = dispatcher.getConnectCommand();
-                final String message = connectCommand.execute(context, null);
+                final String message = controller.execute(Command.CONNECT_NAME, context);
                 log("Server", clientSocket.getPort(), message);
+
                 out.println(message);
 
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
                     log("Client", clientSocket.getPort(), inputLine);
-                    Command command = dispatcher.getCommand(inputLine);
-                    final String response = command.execute(context, inputLine);
+
+                    final String response = controller.execute(inputLine, context);
                     log("Server", clientSocket.getPort(), response);
+
                     out.println(response);
                 }
-            } catch (SocketTimeoutException so){
-                Command byeCommand = dispatcher.getByeCommand();
-                final String response = byeCommand.execute(context, null);
+            } catch (SocketTimeoutException so) {
+                final String response = controller.execute(Command.BYE_MATE_NAME, context);
                 log("Server", clientSocket.getPort(), response);
+
                 out.println(response);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -89,7 +90,7 @@ public class EchoMultiServer {
             }
         }
 
-        private void log(String who, int port, String message){
+        private void log(String who, int port, String message) {
             String text = who + " on socket: " + port + " message: " + message;
             System.out.println(text);
         }
