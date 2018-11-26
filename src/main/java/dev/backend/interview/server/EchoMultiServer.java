@@ -40,16 +40,20 @@ public class EchoMultiServer {
         public EchoClientHandler(Socket socket, Model model) {
             this.controller = new CommandController();
             this.clientSocket = socket;
-            this.context = new SessionContext();
-            this.context.setId(UUID.randomUUID());
-            this.context.setStartTime(new Date().getTime());
-            this.context.setModel(model);
             try {
                 this.clientSocket.setSoTimeout(30000);
             } catch (SocketException e) {
                 e.printStackTrace();
             }
+            initContext(model);
             log("Server", clientSocket.getPort(), "New connection accepted");
+        }
+
+        private void initContext(Model model) {
+            this.context = new SessionContext();
+            this.context.setId(UUID.randomUUID());
+            this.context.setStartTime(new Date().getTime());
+            this.context.setModel(model);
         }
 
         public void run() {

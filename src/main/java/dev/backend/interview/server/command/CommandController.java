@@ -4,7 +4,6 @@ import dev.backend.interview.server.SessionContext;
 import dev.backend.interview.server.model.NodeNotFoundException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -198,7 +197,6 @@ public class CommandController {
 
             try {
                 List<String> result = context.getModel().closerThan(node, limit);
-                Collections.sort(result);
                 return String.join(",", result);
 
             } catch (NodeNotFoundException ne) {
