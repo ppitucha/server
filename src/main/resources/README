@@ -1,0 +1,5 @@
+#how to run
+java -jar server.jar
+
+#run with debug output
+java -jar server.jar debug
