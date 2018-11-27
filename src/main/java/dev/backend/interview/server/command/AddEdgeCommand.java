@@ -13,7 +13,7 @@ class AddEdgeCommand extends CommandBase {
         String[] parameters = parseParameters(input);
         String node1 = parameters[0];
         String node2 = parameters[1];
-        Integer weight = Integer.valueOf(parameters[2]);
+        Integer weight = getIntegerValue(parameters[2]);
 
         validateNodeName(node1);
         validateNodeName(node2);

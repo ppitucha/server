@@ -40,6 +40,14 @@ public abstract class CommandBase implements Command {
         return !name.matches(regex);
     }
 
+    protected int getIntegerValue(String intValue) throws CommandParseException {
+        try {
+            return Integer.valueOf(intValue);
+        } catch (NumberFormatException nfe) {
+            throw new CommandParseException(String.format("Cannot parse value: %s to integer", intValue));
+        }
+    }
+
     protected void validateNodeName(String name) throws CommandParseException {
         if (notAlphaNumeric(name))
             throw new CommandParseException(String.format(

@@ -29,7 +29,7 @@ public class CommandController {
         }
     }
 
-    private Command getCommand(String input) {
+    protected Command getCommand(String input) {
         for (Command command : commands)
             if (command.matching(input))
                 return command;

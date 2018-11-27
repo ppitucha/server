@@ -14,7 +14,7 @@ class CloserThanCommand extends CommandBase {
     @Override
     public String execute(String input, SessionContext context) throws CommandParseException {
         String[] parameters = parseParameters(input);
-        Integer limit = Integer.valueOf(parameters[0]);
+        Integer limit = getIntegerValue(parameters[0]);
         String node = parameters[1];
 
         validateNodeName(node);

@@ -101,7 +101,7 @@ public class Server implements Runnable {
         final Integer serverPort = Integer.valueOf(properties.getProperty("server.socket.port", "50000"));
         final Integer socketTimeout = Integer.valueOf(properties.getProperty("server.socket.timeout", "30000"));
 
-        Server server = new Server(serverPort, socketTimeout);
+        final Server server = new Server(serverPort, socketTimeout);
         Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
         new Thread(server).start();
     }
