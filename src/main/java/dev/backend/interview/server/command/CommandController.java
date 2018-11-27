@@ -1,7 +1,11 @@
 package dev.backend.interview.server.command;
 
+import dev.backend.interview.server.ServerConfiguration;
 import dev.backend.interview.server.SessionContext;
+import dev.backend.interview.server.model.Model;
 import dev.backend.interview.server.model.NodeNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,7 +28,7 @@ public class CommandController {
 
     public String execute(String input, SessionContext context) {
         Command command = getCommand(input);
-        return command.execute(context, input);
+        return command.execute(input, context);
     }
 
     private Command getCommand(String input) {
@@ -36,6 +40,8 @@ public class CommandController {
 
     abstract class CommandBase implements Command {
         protected String body;
+        @Autowired
+        Model model;
 
         @Override
         public boolean matching(String input) {
@@ -55,7 +61,7 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             return "BYE " + context.getClientName() + ", WE SPOKE FOR " +
                     (new Date().getTime() - context.getStartTime()) + " MS";
         }
@@ -67,7 +73,7 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             return "HI, I'M  " + context.getId();
         }
     }
@@ -78,7 +84,7 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             return "SORRY, I DIDN'T UNDERSTAND THAT";
         }
     }
@@ -89,7 +95,7 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             String[] parameters = parseParameters(input);
             context.setClientName(parameters[0]);
 
@@ -103,10 +109,10 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             String[] parameters = parseParameters(input);
 
-            if (context.getModel().addNode(parameters[0]))
+            if (model.addNode(parameters[0]))
                 return "NODE ADDED";
 
             return "ERROR: NODE ALREADY EXISTS";
@@ -119,13 +125,13 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             String[] parameters = parseParameters(input);
             String node1 = parameters[0];
             String node2 = parameters[1];
             Integer weight = Integer.valueOf(parameters[2]);
 
-            if (context.getModel().addEdge(node1, node2, weight))
+            if (model.addEdge(node1, node2, weight))
                 return "EDGE ADDED";
             return "ERROR: NODE NOT FOUND";
         }
@@ -137,11 +143,11 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             String[] parameters = parseParameters(input);
             String nodeName = parameters[0];
 
-            if (context.getModel().removeNode(nodeName))
+            if (model.removeNode(nodeName))
                 return "NODE REMOVED";
 
             return "ERROR: NODE NOT FOUND";
@@ -154,12 +160,12 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             String[] parameters = parseParameters(input);
             String node1 = parameters[0];
             String node2 = parameters[1];
 
-            if (context.getModel().removeEdge(node1, node2))
+            if (model.removeEdge(node1, node2))
                 return "EDGE REMOVED";
             return "ERROR: NODE NOT FOUND";
         }
@@ -171,13 +177,13 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             String[] parameters = parseParameters(input);
             String node1 = parameters[0];
             String node2 = parameters[1];
 
             try {
-                return String.valueOf(context.getModel().shortestPath(node1, node2));
+                return String.valueOf(model.shortestPath(node1, node2));
             } catch (NodeNotFoundException ne) {
                 return "ERROR: NODE NOT FOUND";
             }
@@ -190,13 +196,13 @@ public class CommandController {
         }
 
         @Override
-        public String execute(SessionContext context, String input) {
+        public String execute(String input, SessionContext context) {
             String[] parameters = parseParameters(input);
             Integer limit = Integer.valueOf(parameters[0]);
             String node = parameters[1];
 
             try {
-                List<String> result = context.getModel().closerThan(node, limit);
+                List<String> result = model.closerThan(node, limit);
                 return String.join(",", result);
 
             } catch (NodeNotFoundException ne) {

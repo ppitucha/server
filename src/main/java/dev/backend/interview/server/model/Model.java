@@ -1,7 +1,10 @@
 package dev.backend.interview.server.model;
 
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Service
 public interface Model {
 
     boolean addNode(String node);

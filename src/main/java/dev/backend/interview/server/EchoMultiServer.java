@@ -20,8 +20,9 @@ public class EchoMultiServer {
     private ServerSocket serverSocket;
 
     public void start(int port) throws IOException {
-        Model model = new ModelImpl();
+        Model model = null; //new ModelImpl();
         serverSocket = new ServerSocket(port);
+
         while (true)
             new EchoClientHandler(serverSocket.accept(), model).start();
     }
@@ -98,16 +99,5 @@ public class EchoMultiServer {
             String text = who + " on socket: " + port + " message: " + message;
             System.out.println(text);
         }
-
     }
-
-    public static void main(String[] args) {
-        try {
-            EchoMultiServer server = new EchoMultiServer();
-            server.start(50000);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 }
