@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Date;
 import java.util.UUID;
@@ -27,11 +26,6 @@ class Worker implements Runnable {
         initContext();
         this.controller = new CommandController();
         this.clientSocket = socket;
-        try {
-            this.clientSocket.setSoTimeout(30000);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
         logCommand("Server", clientSocket.getPort(), "New connection accepted");
     }
 
@@ -84,7 +78,7 @@ class Worker implements Runnable {
     }
 
     private void logCommand(String who, int port, String message) {
-        String text = who + " on socket: " + port + " message: " + message;
+        String text = who + " command on socket: " + port + " message: " + message;
         logger.debug(text);
     }
 }

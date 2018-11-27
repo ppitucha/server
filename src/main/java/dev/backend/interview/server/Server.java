@@ -1,30 +1,46 @@
 package dev.backend.interview.server;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import org.apache.log4j.Logger;
 
 public class Server implements Runnable {
     private static final Logger logger = Logger.getLogger(Server.class);
     private final int serverPort;
+    private final int socketTimeout;
     private ServerSocket serverSocket;
     private boolean isStopped;
 
-    public Server(int port) {
+    public Server(int port, int socketTimeout) {
         this.serverPort = port;
+        this.socketTimeout = socketTimeout;
     }
 
     @Override
     public void run() {
         createServerSocket();
         ExecutorService threadPool = Executors.newFixedThreadPool(10);
+        logger.info(String.format("Server on port: %d started", this.serverPort));
         while (!isStopped()) {
             Worker worker;
             try {
-                worker = new Worker(this.serverSocket.accept());
+                final Socket clientSocket = this.serverSocket.accept();
+                try {
+                    clientSocket.setSoTimeout(socketTimeout);
+                } catch (SocketException e) {
+                    final String errorMessage = String.format("Error setting timeout: %d on port: %d",
+                            socketTimeout, clientSocket.getPort());
+                    logger.error(errorMessage, e);
+                    throw new RuntimeException(errorMessage, e);
+                }
+                worker = new Worker(clientSocket);
             } catch (IOException e) {
                 if (isStopped()) {
                     logger.info(String.format("Server on port: %d stopped", this.serverPort));
@@ -42,6 +58,7 @@ public class Server implements Runnable {
     }
 
     private void stop() {
+        logger.info(String.format("Server on port: %d stopping", this.serverPort));
         this.isStopped = true;
         try {
             if(serverSocket != null)
@@ -67,8 +84,24 @@ public class Server implements Runnable {
         }
     }
 
+    private static Properties loadProperties() {
+        Properties serverProperties = new Properties();
+        try {
+            serverProperties.load(Server.class.getResourceAsStream("/server.properties"));
+        } catch (IOException e) {
+            logger.warn("Cannot load properties", e);
+        }
+        return serverProperties;
+    }
     public static void main(String[] args) {
-        Server server = new Server(50000);
+        if (args.length > 0 && args[args.length - 1].equals("debug")) {
+            Logger.getRootLogger().setLevel(Level.DEBUG);
+        }
+        final Properties properties = loadProperties();
+        final Integer serverPort = Integer.valueOf(properties.getProperty("server.socket.port", "50000"));
+        final Integer socketTimeout = Integer.valueOf(properties.getProperty("server.socket.timeout", "30000"));
+
+        Server server = new Server(serverPort, socketTimeout);
         Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
         new Thread(server).start();
     }
