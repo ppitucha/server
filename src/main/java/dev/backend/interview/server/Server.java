@@ -2,8 +2,6 @@ package dev.backend.interview.server;
 
 import dev.backend.interview.server.command.Command;
 import dev.backend.interview.server.command.CommandController;
-import dev.backend.interview.server.model.Model;
-import dev.backend.interview.server.model.ModelImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,15 +14,14 @@ import java.net.SocketTimeoutException;
 import java.util.Date;
 import java.util.UUID;
 
-public class EchoMultiServer {
+public class Server {
     private ServerSocket serverSocket;
 
     public void start(int port) throws IOException {
-        Model model = null; //new ModelImpl();
         serverSocket = new ServerSocket(port);
 
         while (true)
-            new EchoClientHandler(serverSocket.accept(), model).start();
+            new EchoClientHandler(serverSocket.accept()).start();
     }
 
     public void stop() throws IOException {
@@ -38,7 +35,8 @@ public class EchoMultiServer {
         private SessionContext context;
         private CommandController controller;
 
-        public EchoClientHandler(Socket socket, Model model) {
+        public EchoClientHandler(Socket socket) {
+            initContext();
             this.controller = new CommandController();
             this.clientSocket = socket;
             try {
@@ -46,15 +44,13 @@ public class EchoMultiServer {
             } catch (SocketException e) {
                 e.printStackTrace();
             }
-            initContext(model);
             log("Server", clientSocket.getPort(), "New connection accepted");
         }
 
-        private void initContext(Model model) {
+        private void initContext() {
             this.context = new SessionContext();
             this.context.setId(UUID.randomUUID());
             this.context.setStartTime(new Date().getTime());
-            this.context.setModel(model);
         }
 
         public void run() {
@@ -100,4 +96,14 @@ public class EchoMultiServer {
             System.out.println(text);
         }
     }
+
+    public static void main(String[] args) {
+        try {
+            Server server = new Server();
+            server.start(50000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

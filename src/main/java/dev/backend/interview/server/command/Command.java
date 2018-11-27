@@ -6,7 +6,7 @@ public interface Command {
 
     boolean matching(String input);
 
-    String execute(String input, SessionContext context);
+    String execute(String input, SessionContext context) throws CommandParseException;
 
     String BYE_MATE_NAME = "BYE MATE!";
     String CONNECT_NAME = "__CONNECT__";

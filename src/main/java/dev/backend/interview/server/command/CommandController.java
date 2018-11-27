@@ -1,11 +1,9 @@
 package dev.backend.interview.server.command;
 
-import dev.backend.interview.server.ServerConfiguration;
 import dev.backend.interview.server.SessionContext;
 import dev.backend.interview.server.model.Model;
+import dev.backend.interview.server.model.ModelProvider;
 import dev.backend.interview.server.model.NodeNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,7 +26,11 @@ public class CommandController {
 
     public String execute(String input, SessionContext context) {
         Command command = getCommand(input);
-        return command.execute(input, context);
+        try {
+            return command.execute(input, context);
+        } catch (CommandParseException cpe) {
+            return new ErrorCommand().execute(null, context);
+        }
     }
 
     private Command getCommand(String input) {
@@ -40,16 +42,22 @@ public class CommandController {
 
     abstract class CommandBase implements Command {
         protected String body;
-        @Autowired
-        Model model;
+        protected int parametersCount;
+
+        Model model = ModelProvider.getModel();
 
         @Override
         public boolean matching(String input) {
             return input.startsWith(body);
         }
 
-        protected String[] parseParameters(String input) {
-            return input.substring(input.indexOf(body) + body.length()).split("\\s+");
+        protected String[] parseParameters(String input) throws CommandParseException {
+            String[] parameters = input.substring(input.indexOf(body) + body.length()).split("\\s+");
+
+            if (parameters.length != parametersCount)
+                throw new CommandParseException();
+
+            return parameters;
         }
 
 
@@ -92,11 +100,13 @@ public class CommandController {
     class HiCommand extends CommandBase {
         HiCommand() {
             this.body = Command.HI_NAME;
+            this.parametersCount = 1;
         }
 
         @Override
-        public String execute(String input, SessionContext context) {
+        public String execute(String input, SessionContext context) throws CommandParseException {
             String[] parameters = parseParameters(input);
+            //TODO validation
             context.setClientName(parameters[0]);
 
             return "HI " + context.getClientName();
@@ -106,10 +116,11 @@ public class CommandController {
     class AddNodeCommand extends CommandBase {
         AddNodeCommand() {
             this.body = Command.ADD_NODE_NAME;
+            this.parametersCount = 1;
         }
 
         @Override
-        public String execute(String input, SessionContext context) {
+        public String execute(String input, SessionContext context) throws CommandParseException {
             String[] parameters = parseParameters(input);
 
             if (model.addNode(parameters[0]))
@@ -122,10 +133,11 @@ public class CommandController {
     class AddEdgeCommand extends CommandBase {
         AddEdgeCommand() {
             this.body = Command.ADD_EDGE_NAME;
+            this.parametersCount = 3;
         }
 
         @Override
-        public String execute(String input, SessionContext context) {
+        public String execute(String input, SessionContext context) throws CommandParseException {
             String[] parameters = parseParameters(input);
             String node1 = parameters[0];
             String node2 = parameters[1];
@@ -140,10 +152,11 @@ public class CommandController {
     class RemoveNodeCommand extends CommandBase {
         RemoveNodeCommand() {
             this.body = Command.REMOVE_NODE_NAME;
+            this.parametersCount = 1;
         }
 
         @Override
-        public String execute(String input, SessionContext context) {
+        public String execute(String input, SessionContext context) throws CommandParseException {
             String[] parameters = parseParameters(input);
             String nodeName = parameters[0];
 
@@ -157,10 +170,12 @@ public class CommandController {
     class RemoveEdgeCommand extends CommandBase {
         RemoveEdgeCommand() {
             this.body = Command.REMOVE_EDGE_NAME;
+            this.parametersCount = 2;
+
         }
 
         @Override
-        public String execute(String input, SessionContext context) {
+        public String execute(String input, SessionContext context) throws CommandParseException {
             String[] parameters = parseParameters(input);
             String node1 = parameters[0];
             String node2 = parameters[1];
@@ -174,10 +189,11 @@ public class CommandController {
     class ShortestPathCommand extends CommandBase {
         ShortestPathCommand() {
             this.body = Command.SHORTEST_PATH_NAME;
+            this.parametersCount = 2;
         }
 
         @Override
-        public String execute(String input, SessionContext context) {
+        public String execute(String input, SessionContext context) throws CommandParseException {
             String[] parameters = parseParameters(input);
             String node1 = parameters[0];
             String node2 = parameters[1];
@@ -193,10 +209,11 @@ public class CommandController {
     class CloserThanCommand extends CommandBase {
         CloserThanCommand() {
             this.body = Command.CLOSER_THAN_NAME;
+            this.parametersCount = 2;
         }
 
         @Override
-        public String execute(String input, SessionContext context) {
+        public String execute(String input, SessionContext context) throws CommandParseException {
             String[] parameters = parseParameters(input);
             Integer limit = Integer.valueOf(parameters[0]);
             String node = parameters[1];
