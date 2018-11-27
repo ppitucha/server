@@ -1,109 +1,75 @@
 package dev.backend.interview.server;
 
-import dev.backend.interview.server.command.CommandBase;
-import dev.backend.interview.server.command.CommandController;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.util.Date;
-import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class Server {
+import org.apache.log4j.Logger;
+
+public class Server implements Runnable {
+    private static final Logger logger = Logger.getLogger(Server.class);
+    private final int serverPort;
     private ServerSocket serverSocket;
+    private boolean isStopped;
 
-    public void start(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
-
-        while (true)
-            new EchoClientHandler(serverSocket.accept()).start();
+    public Server(int port) {
+        this.serverPort = port;
     }
 
-    public void stop() throws IOException {
-        serverSocket.close();
-    }
-
-    private static class EchoClientHandler extends Thread {
-        private Socket clientSocket;
-        private PrintWriter out;
-        private BufferedReader in;
-        private SessionContext context;
-        private CommandController controller;
-
-        public EchoClientHandler(Socket socket) {
-            initContext();
-            this.controller = new CommandController();
-            this.clientSocket = socket;
+    @Override
+    public void run() {
+        createServerSocket();
+        ExecutorService threadPool = Executors.newFixedThreadPool(10);
+        while (!isStopped()) {
+            Worker worker;
             try {
-                this.clientSocket.setSoTimeout(30000);
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
-            log("Server", clientSocket.getPort(), "New connection accepted");
-        }
-
-        private void initContext() {
-            this.context = new SessionContext();
-            this.context.setSessionId(UUID.randomUUID().toString());
-            this.context.setStartTime(new Date().getTime());
-        }
-
-        public void run() {
-            try {
-                out = new PrintWriter(clientSocket.getOutputStream(), true);
-                in = new BufferedReader(
-                        new InputStreamReader(clientSocket.getInputStream()));
-
-                final String message = controller.execute(CommandBase.CONNECT_NAME, context);
-                log("Server", clientSocket.getPort(), message);
-
-                out.println(message);
-
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    log("Client", clientSocket.getPort(), inputLine);
-
-                    final String response = controller.execute(inputLine, context);
-                    log("Server", clientSocket.getPort(), response);
-
-                    out.println(response);
-                }
-            } catch (SocketTimeoutException so) {
-                final String response = controller.execute(CommandBase.BYE_MATE_NAME, context);
-                log("Server", clientSocket.getPort(), response);
-
-                out.println(response);
+                worker = new Worker(this.serverSocket.accept());
             } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    in.close();
-                    out.close();
-                    clientSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (isStopped()) {
+                    logger.info(String.format("Server on port: %d stopped", this.serverPort));
+                    break;
                 }
+                final String errorMessage = String.format("Error accepting client connection on port: %d",
+                        this.serverPort);
+                logger.error(errorMessage, e);
+                throw new RuntimeException(errorMessage, e);
             }
+            threadPool.execute(worker);
         }
+        threadPool.shutdown();
+        logger.info(String.format("Server on port: %d stopped", this.serverPort));
+    }
 
-        private void log(String who, int port, String message) {
-            String text = who + " on socket: " + port + " message: " + message;
-            System.out.println(text);
+    private void stop() {
+        this.isStopped = true;
+        try {
+            if(serverSocket != null)
+                serverSocket.close();
+        } catch (IOException e) {
+            final String errorMessage = String.format("Error on closing server on port: %d", this.serverPort);
+            logger.error(errorMessage, e);
+            throw new RuntimeException(errorMessage, e);
+        }
+    }
+
+    private synchronized boolean isStopped() {
+        return this.isStopped;
+    }
+
+    private void createServerSocket() {
+        try {
+            this.serverSocket = new ServerSocket(this.serverPort);
+        } catch (IOException e) {
+            final String errorMessage = String.format("Error creating socket server on port: %d", this.serverPort);
+            logger.error(errorMessage, e);
+            throw new RuntimeException(errorMessage, e);
         }
     }
 
     public static void main(String[] args) {
-        try {
-            Server server = new Server();
-            server.start(50000);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Server server = new Server(50000);
+        Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
+        new Thread(server).start();
     }
-
 }

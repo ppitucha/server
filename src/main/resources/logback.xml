@@ -1,78 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <configuration debug="true" scan="true" scanPeriod="180 seconds" >
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
-
         <encoder>
             <pattern>${CONSOLE_LOG_PATTERN}</pattern>
             <charset>utf8</charset>
         </encoder>
     </appender>
 
-    <appender name="infoFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/log.log</file>
-
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>info</level>
-        </filter>
-
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%t] %-40.40logger{39} : %m%n%nopex</pattern>
-        </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/info/info.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <maxFileSize>5MB</maxFileSize>
-            <maxHistory>90</maxHistory>
-        </rollingPolicy>
-    </appender>
-
-    <appender name="debugFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/debug/debug.log</file>
-
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>debug</level>
-        </filter>
-
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-        </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/debug/debug.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>14</maxHistory>
-        </rollingPolicy>
-    </appender>
-
-    <appender name="traceFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/trace/trace.log</file>
-
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>trace</level>
-        </filter>
-
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-        </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/trace/trace.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>7</maxHistory>
-        </rollingPolicy>
-    </appender>
-
     <root level="debug">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="debugFile"/>
-        <appender-ref ref="traceFile"/>
     </root>
-
-    <logger name=" dev.backend.interview.server" level="debug"/>
-    <logger name="org.springframework" level="debug"/>
-    <logger name="org.apache.coyote.http11" level="trace"/>
 </configuration>
