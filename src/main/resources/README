@@ -1,4 +1,4 @@
-#how to run
+#run command
 java -jar server.jar
 
 #run with debug output

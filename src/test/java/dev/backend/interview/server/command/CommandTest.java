@@ -3,13 +3,12 @@ package dev.backend.interview.server.command;
 import dev.backend.interview.server.SessionContext;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
-import java.text.ParseException;
 import java.util.Date;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CommandTest {
 

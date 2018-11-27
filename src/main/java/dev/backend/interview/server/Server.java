@@ -61,7 +61,7 @@ public class Server implements Runnable {
         logger.info(String.format("Server on port: %d stopping", this.serverPort));
         this.isStopped = true;
         try {
-            if(serverSocket != null)
+            if (serverSocket != null)
                 serverSocket.close();
         } catch (IOException e) {
             final String errorMessage = String.format("Error on closing server on port: %d", this.serverPort);
@@ -93,6 +93,7 @@ public class Server implements Runnable {
         }
         return serverProperties;
     }
+
     public static void main(String[] args) {
         if (args.length > 0 && args[args.length - 1].equals("debug")) {
             Logger.getRootLogger().setLevel(Level.DEBUG);
