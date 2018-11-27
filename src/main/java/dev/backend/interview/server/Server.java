@@ -1,6 +1,6 @@
 package dev.backend.interview.server;
 
-import dev.backend.interview.server.command.Command;
+import dev.backend.interview.server.command.CommandBase;
 import dev.backend.interview.server.command.CommandController;
 
 import java.io.BufferedReader;
@@ -49,7 +49,7 @@ public class Server {
 
         private void initContext() {
             this.context = new SessionContext();
-            this.context.setId(UUID.randomUUID());
+            this.context.setSessionId(UUID.randomUUID().toString());
             this.context.setStartTime(new Date().getTime());
         }
 
@@ -59,7 +59,7 @@ public class Server {
                 in = new BufferedReader(
                         new InputStreamReader(clientSocket.getInputStream()));
 
-                final String message = controller.execute(Command.CONNECT_NAME, context);
+                final String message = controller.execute(CommandBase.CONNECT_NAME, context);
                 log("Server", clientSocket.getPort(), message);
 
                 out.println(message);
@@ -74,7 +74,7 @@ public class Server {
                     out.println(response);
                 }
             } catch (SocketTimeoutException so) {
-                final String response = controller.execute(Command.BYE_MATE_NAME, context);
+                final String response = controller.execute(CommandBase.BYE_MATE_NAME, context);
                 log("Server", clientSocket.getPort(), response);
 
                 out.println(response);

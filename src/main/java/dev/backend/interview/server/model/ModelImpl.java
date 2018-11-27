@@ -49,7 +49,8 @@ public class ModelImpl implements Model {
     @Override
     public synchronized int shortestPath(String node1, String node2) throws NodeNotFoundException {
         if (!graph.containsVertex(node1) || !graph.containsVertex(node2))
-            throw new NodeNotFoundException();
+            throw new NodeNotFoundException(String.format("At least one of following nodes not found: {}, {}",
+                    node1, node2));
 
         ShortestPathAlgorithm<String, DefaultWeightedEdge> dijkstraAlg =
                 new DijkstraShortestPath<>(graph);
@@ -65,7 +66,7 @@ public class ModelImpl implements Model {
     @Override
     public synchronized List<String> closerThan(String node, Integer limit) throws NodeNotFoundException {
         if (!graph.containsVertex(node))
-            throw new NodeNotFoundException();
+            throw new NodeNotFoundException(String.format("Following node not found: ", node));
 
         ClosestFirstIterator<String, DefaultWeightedEdge> iterator =
                 new ClosestFirstIterator<>(graph, node, limit - 1);
